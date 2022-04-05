@@ -14,14 +14,23 @@ rate = plt.figure(figsize=(12,8))
 ax_rate = rate.add_subplot(111)
 ax_rate.set_xlabel('date')
 ax_rate.set_ylabel('rate[/s]')
+ax_rate.set_yscale('log')
+ax_rate.grid()
 spec = plt.figure(figsize=(12,8))
 ax_spec = spec.add_subplot(111)
 ax_spec.set_xlabel('channel')
 ax_spec.set_ylabel('rate[/s]')
 ax_spec.set_yscale('log')
+ax_spec.grid()
+sumspec = plt.figure(figsize=(12,8))
+ax_sum = sumspec.add_subplot(111)
+ax_sum.set_xlabel('channel')
+ax_sum.set_ylabel('rate[/s]')
+#ax_sum.set_yscale('log')
+ax_sum.grid()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-s",help="start date. for example 2021-01-09-00:00:00",default='2021-01-09-00:00:00',type=str)
+parser.add_argument("-s",help="start date. for example 2021-01-09-00:00:00",default='2022-03-08-09:00:00',type=str)
 parser.add_argument("-e",help="end date. for example 2021-01-11-00:00:00 or now",default='now',type=str)
 args = parser.parse_args()
 start = datetime.datetime.strptime(args.s, '%Y-%m-%d-%H:%M:%S')
@@ -32,14 +41,18 @@ else:
 #start = args.s
 #end = args.e
 
+sum_spectra=[0]*1024
+
 for file_path in file_list:
-	print(file_path)
+	#print(file_path)
 	with codecs.open(file_path, 'r', 'utf-8', 'ignore') as file:
 		lines = file.readlines()
 	
 		spectrum=[]
 		flag=False
 		draw=False
+
+		#sum_spectra=[0]*bins
 
 		for line in lines:
 		    if 'LIVE_TIME' in line:
@@ -64,7 +77,7 @@ for file_path in file_list:
 		counts = sum(spectrum)
 		
 		if (runstart>start)and(runstart<end):
-			draw=True 
+			draw=True
 		
 
 		ax_rate.scatter(runstart,counts/livetime,c='C0',s=10)
@@ -72,7 +85,11 @@ for file_path in file_list:
 		#ax_rate.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n%H:%M'))	
 		if draw:
 			ax_spec.plot(range(0,bins),spectrum,label=runstart)
-		ax_spec.legend()
+			sum_spectra=[spectrum+sum_spectra for (spectrum,sum_spectra) in zip(spectrum,sum_spectra)]
+			#print(sum_spectra)
+
+ax_sum.plot(range(0,bins),sum_spectra)
+ax_spec.legend()
 plt.show()
-		#ax_rate.show()
-		#ax_spec.show()
+#ax_rate.show()
+#ax_spec.show()
